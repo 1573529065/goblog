@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"net/http"
 	"net/url"
