@@ -19,6 +19,19 @@ import (
 var router = mux.NewRouter()
 var db *sql.DB
 
+type Article struct {
+	ID    int64
+	Title string
+	Body  string
+}
+
+type articlesFormData struct {
+	Title  string
+	Body   string
+	URL    *url.URL
+	Errors map[string]string
+}
+
 func initDB() {
 	var err error
 	config := mysql.Config{
@@ -80,12 +93,6 @@ func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "<h1>请求页面未找到: (</h1><p>如有疑惑, 请联系我们.</p>")
 }
 
-type Article struct {
-	ID    int64
-	Title string
-	Body  string
-}
-
 func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 	// 1. 获取参数
 	id := getRouterVariable("id", r)
@@ -115,14 +122,42 @@ func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "访问文章列表")
+	// 1. 查出所有数据
+	rows, err := db.Query("SELECT * FROM articles")
+	checkError(err)
+	defer rows.Close()
+
+	var articles []Article
+	// 2. 循环处理数据
+	for rows.Next() {
+		var article Article
+		// 2.1 将每一行数据赋值到 artice 对象中
+		err := rows.Scan(&article.ID, &article.Title, &article.Body)
+		checkError(err)
+
+		// 2.2 将数据追加到 articles 数组中
+		articles = append(articles, article)
+	}
+
+	// 2.3 检测遍历时是否发生错误
+	err = rows.Err()
+	checkError(err)
+
+	// 3. 加载模板
+	temp, err := template.ParseFiles("resources/views/articles/index.gohtml")
+	checkError(err)
+
+	// 4. 渲染模板
+	temp.Execute(w, articles)
 }
 
-type articlesFormData struct {
-	Title  string
-	Body   string
-	URL    *url.URL
-	Errors map[string]string
+func (a Article) Link() string {
+	showURL, err := router.Get("articles.show").URL("id", strconv.FormatInt(a.ID, 10))
+	if err != nil {
+		checkError(err)
+		return ""
+	}
+	return showURL.String()
 }
 
 func validateArticleFormData(title string, body string) map[string]string {
