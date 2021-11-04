@@ -96,7 +96,7 @@ func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 
 func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 	// 1. 获取参数
-	id := getRouterVariable("id", r)
+	id := route.GetRouterVariable("id", r)
 
 	// 2. 读取数据库数据
 	article, err := getArticelByID(id)
@@ -260,11 +260,6 @@ func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, data)
 }
 
-func getRouterVariable(parameterName string, r *http.Request) string {
-	vars := mux.Vars(r)
-	return vars[parameterName]
-}
-
 // 通过id 获取文章信息
 func getArticelByID(id string) (Article, error) {
 	article := Article{}
@@ -275,7 +270,7 @@ func getArticelByID(id string) (Article, error) {
 
 func articlesEditHandler(w http.ResponseWriter, r *http.Request) {
 	// 1. 获取参数
-	id := getRouterVariable("id", r)
+	id := route.GetRouterVariable("id", r)
 
 	// 2. 读取数据
 	article, err := getArticelByID(id)
@@ -310,7 +305,7 @@ func articlesEditHandler(w http.ResponseWriter, r *http.Request) {
 
 func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	// 1. 获取参数
-	id := getRouterVariable("id", r)
+	id := route.GetRouterVariable("id", r)
 
 	// 2. 读取文章
 	_, err := getArticelByID(id)
@@ -383,7 +378,7 @@ func (a Article) Delete() (rowsAffected int64, err error) {
 }
 
 func articlesDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	id := getRouterVariable("id", r)
+	id := route.GetRouterVariable("id", r)
 
 	article, err := getArticelByID(id)
 	if err != nil {
