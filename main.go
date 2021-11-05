@@ -5,10 +5,10 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
+	"goblog/bootstrap"
 	"goblog/pkg/database"
 	"goblog/pkg/logger"
 	"goblog/pkg/route"
-	"goblog/pkg/types"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -31,38 +31,6 @@ type articlesFormData struct {
 	Body   string
 	URL    *url.URL
 	Errors map[string]string
-}
-
-func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
-	// 1. 获取参数
-	id := route.GetRouterVariable("id", r)
-
-	// 2. 读取数据库数据
-	article, err := getArticelByID(id)
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			// 3.1 数据未找到
-			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprint(w, "404 文章未找到")
-		} else {
-			// 3.2 数据库错误
-			logger.LogError(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprint(w, "500 服务器内部错误")
-		}
-	} else {
-		// 4. 读取成功
-		//fmt.Fprintf(w, "读取成功, 文章标题 - %v", article.Title)
-		//tmpl, err := template.ParseFiles("resources/views/articles/show.gohtml")
-		tmpl, err := template.New("show.gohtml").Funcs(template.FuncMap{
-			"RouteName2URL": route.Name2URL,
-			"Int64ToString": types.Int64ToString,
-		}).ParseFiles("resources/views/articles/show.gohtml")
-		logger.LogError(err)
-
-		tmpl.Execute(w, article)
-	}
 }
 
 func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -369,10 +337,9 @@ func main() {
 	database.Initialeze()
 	db = database.DB
 
-	route.Initialize()
-	router = route.Router
+	bootstrap.SetupDB()
+	router = bootstrap.SetupRoute()
 
-	router.HandleFunc("/articles/{id:[0-9]+}", articlesShowHandler).Methods("GET").Name("articles.show")
 	router.HandleFunc("/articles", articlesIndexHandler).Methods("GET").Name("articles.index")
 	router.HandleFunc("/articles", articlesStoreHandler).Methods("POST").Name("articles.store")
 	router.HandleFunc("/articles/create", articlesCreateHandler).Methods("GET").Name("articles.create")
