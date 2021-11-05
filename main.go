@@ -33,45 +33,6 @@ type articlesFormData struct {
 	Errors map[string]string
 }
 
-func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
-	// 1. 查出所有数据
-	rows, err := db.Query("SELECT * FROM articles")
-	logger.LogError(err)
-	defer rows.Close()
-
-	var articles []Article
-	// 2. 循环处理数据
-	for rows.Next() {
-		var article Article
-		// 2.1 将每一行数据赋值到 artice 对象中
-		err := rows.Scan(&article.ID, &article.Title, &article.Body)
-		logger.LogError(err)
-
-		// 2.2 将数据追加到 articles 数组中
-		articles = append(articles, article)
-	}
-
-	// 2.3 检测遍历时是否发生错误
-	err = rows.Err()
-	logger.LogError(err)
-
-	// 3. 加载模板
-	temp, err := template.ParseFiles("resources/views/articles/index.gohtml")
-	logger.LogError(err)
-
-	// 4. 渲染模板
-	temp.Execute(w, articles)
-}
-
-func (a Article) Link() string {
-	showURL, err := router.Get("articles.show").URL("id", strconv.FormatInt(a.ID, 10))
-	if err != nil {
-		logger.LogError(err)
-		return ""
-	}
-	return showURL.String()
-}
-
 func validateArticleFormData(title string, body string) map[string]string {
 	errors := make(map[string]string)
 
@@ -340,7 +301,6 @@ func main() {
 	bootstrap.SetupDB()
 	router = bootstrap.SetupRoute()
 
-	router.HandleFunc("/articles", articlesIndexHandler).Methods("GET").Name("articles.index")
 	router.HandleFunc("/articles", articlesStoreHandler).Methods("POST").Name("articles.store")
 	router.HandleFunc("/articles/create", articlesCreateHandler).Methods("GET").Name("articles.create")
 	router.HandleFunc("/articles/{id:[0-9]+}/edit", articlesEditHandler).Methods("GET").Name("articles.edit")

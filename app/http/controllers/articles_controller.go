@@ -48,3 +48,46 @@ func (*ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
 		tmpl.Execute(w, article)
 	}
 }
+
+func (*ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
+	articles, err := article.GetAll()
+
+	if err != nil {
+		logger.LogError(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "500, 服务器内部错误")
+	} else {
+		tmpl, err := template.ParseFiles("resources/views/articles/index.gohtml")
+		logger.LogError(err)
+		tmpl.Execute(w, articles)
+	}
+
+	//
+	//// 1. 查出所有数据
+	//rows, err := db.Query("SELECT * FROM articles")
+	//logger.LogError(err)
+	//defer rows.Close()
+	//
+	//var articles []Article
+	//// 2. 循环处理数据
+	//for rows.Next() {
+	//	var article Article
+	//	// 2.1 将每一行数据赋值到 artice 对象中
+	//	err := rows.Scan(&article.ID, &article.Title, &article.Body)
+	//	logger.LogError(err)
+	//
+	//	// 2.2 将数据追加到 articles 数组中
+	//	articles = append(articles, article)
+	//}
+	//
+	//// 2.3 检测遍历时是否发生错误
+	//err = rows.Err()
+	//logger.LogError(err)
+	//
+	//// 3. 加载模板
+	//temp, err := template.ParseFiles("resources/views/articles/index.gohtml")
+	//logger.LogError(err)
+	//
+	//// 4. 渲染模板
+	//temp.Execute(w, articles)
+}
